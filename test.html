@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2026 | Mirror Reflection Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; background: #000; overflow: hidden; }
+        canvas { position: fixed; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: 1; }
+        .netflix-red { color: #E50914; }
+        .netflix-font { font-family: 'Bebas Neue', cursive; letter-spacing: 0.15em; }
+        .glow-red { filter: drop-shadow(0 0 20px rgba(229, 9, 20, 0.9)); }
+        #vignette { position: fixed; inset: 0; background: radial-gradient(circle, transparent 30%, black 110%); pointer-events: none; z-index: 100; }
+        #start-screen { position: fixed; inset: 0; background: black; z-index: 1000; cursor: pointer; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+    </style>
+</head>
+<body>
+
+    <div id="vignette"></div>
+    <div id="start-screen">
+        <div class="text-center px-10">
+            <h1 class="netflix-font text-8xl md:text-9xl netflix-red animate-pulse">N</h1>
+            <p class="mt-4 tracking-[0.4em] text-[10px] uppercase opacity-40 text-white">Press to Enter</p>
+        </div>
+    </div>
+
+    <canvas id="bg"></canvas>
+
+    <div class="relative z-10 w-full h-full pointer-events-none">
+        <div id="scene-2025" class="absolute inset-0 flex flex-col items-center justify-center opacity-0">
+            <h1 class="netflix-font text-6xl md:text-9xl netflix-red glow-red">2025</h1>
+            <p class="text-white tracking-[1em] text-[10px] mt-2">FINALE</p>
+        </div>
+        <div id="scene-2026" class="absolute inset-0 flex flex-col items-center justify-center opacity-0 scale-150 px-6">
+            <h1 class="netflix-font text-7xl md:text-[15rem] leading-none text-white glow-red">2026</h1>
+            <div class="h-1 w-full max-w-sm md:max-w-xl bg-[#E50914] shadow-[0_0_20px_#E50914] mt-2"></div>
+        </div>
+        <div id="credits" class="absolute top-full w-full flex flex-col items-center text-center">
+            <div class="mb-40"><p class="text-[#E50914] text-[10px] tracking-widest mb-1">DIRECTED BY</p><p class="text-white text-5xl md:text-7xl font-black">GOD</p></div>
+            <div class="mb-40"><p class="text-[#E50914] text-[10px] tracking-widest mb-1">PRODUCED BY</p><p class="text-white text-5xl md:text-7xl font-black">JESUS</p></div>
+            <div class="mb-40"><p class="text-[#E50914] text-[10px] tracking-widest mb-1">Ex-Producer</p><p class="text-white text-5xl md:text-7xl font-black">HOLY SPIRIT</p></div>
+            <div class="mb-40"><p class="text-[#E50914] text-[10px] tracking-widest mb-1">Co-Producer</p><p class="text-white text-5xl md:text-7xl font-black">ANGELS</p></div>
+            <div class="mb-40"><p class="text-[#E50914] text-[10px] tracking-widest mb-1">YEAR GUIDE BY</p><p class="text-white text-5xl md:text-7xl font-black">HEAVEN</p></div>
+            <div class="mt-40 mb-96"><h2 class="netflix-font text-8xl netflix-red glow-red">2026</h2></div>
+        </div>
+    </div>
+
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector('#bg'), antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.position.z = 60;
+
+        // Two particle systems: Main and Reflection
+        const count = window.innerWidth < 768 ? 10000 : 20000;
+        
+        function createParticles(opacity, size) {
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(count * 3);
+            const col = new Float32Array(count * 3);
+            for (let i = 0; i < count * 3; i++) {
+                pos[i] = (Math.random() - 0.5) * 600;
+                col[i] = 1.0;
+            }
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+            return new THREE.Points(geo, new THREE.PointsMaterial({ size: size, vertexColors: true, transparent: true, opacity: opacity }));
+        }
+
+        const mainSystem = createParticles(0.9, 0.15);
+        const mirrorSystem = createParticles(0.2, 0.12); // Reflection is dimmer and smaller
+        scene.add(mainSystem);
+        scene.add(mirrorSystem);
+
+        function getTargetPoints(text, size, isMob) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 1600; canvas.height = 400;
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size}px Bebas Neue`;
+            ctx.textAlign = 'center';
+            ctx.letterSpacing = isMob ? "22px" : "4px"; // Extra wide spacing for mobile
+            ctx.fillText(text, 800, 200);
+            
+            const data = ctx.getImageData(0, 0, 1600, 400).data;
+            const pts = [];
+            const step = isMob ? 4 : 2;
+            const scale = isMob ? 0.07 : 0.15;
+            for (let y = 0; y < 400; y += step) {
+                for (let x = 0; x < 1600; x += step) {
+                    if (data[(y * 1600 + x) * 4] > 128) {
+                        pts.push({ x: (x - 800) * scale, y: -(y - 200) * scale });
+                    }
+                }
+            }
+            return pts;
+        }
+
+        const isMobile = window.innerWidth < 768;
+        const hiddenMsg = getTargetPoints("WE LOVE YOU ALL", isMobile ? 80 : 100, isMobile);
+        const finalMsg = getTargetPoints("GOOD NIGHT", isMobile ? 130 : 180, isMobile);
+
+        const tl = gsap.timeline({ paused: true });
+        let mode = 'travel';
+        let speed = 0.6;
+
+        tl.to("#start-screen", { opacity: 0, duration: 1, onComplete: () => document.getElementById('start-screen').remove() })
+          .to("#scene-2025", { opacity: 1, duration: 2 }).to("#scene-2025", { opacity: 0, scale: 0.8, duration: 1.5 }, "+=1")
+          .to({}, { duration: 1, onStart: () => { speed = 16; }, onComplete: () => { speed = 0.6; }})
+          .to("#scene-2026", { opacity: 1, scale: 1, duration: 2, ease: "expo.out" })
+          .to("#scene-2026", { opacity: 0, y: -100, duration: 2 }, "+=2.5")
+          .to("#credits", { y: isMobile ? "-450vh" : "-400vh", duration: 18, ease: "none" })
+          .to({}, { duration: 0.1, onStart: () => { mode = 'hidden'; }})
+          .to({}, { duration: 1.2 })
+          .to({}, { duration: 0.1, onStart: () => { mode = 'final'; }})
+          .to(camera.position, { z: isMobile ? 80 : 100, duration: 10, ease: "power1.inOut" });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const mainPos = mainSystem.geometry.attributes.position.array;
+            const mainCol = mainSystem.geometry.attributes.color.array;
+            const mirrPos = mirrorSystem.geometry.attributes.position.array;
+            const mirrCol = mirrorSystem.geometry.attributes.color.array;
+
+            if (mode === 'travel') {
+                for (let i = 2; i < mainPos.length; i += 3) {
+                    mainPos[i] += speed;
+                    mirrPos[i] = mainPos[i]; // Sync stars
+                    if (mainPos[i] > 100) mainPos[i] = -400;
+                }
+            } else {
+                const targets = mode === 'hidden' ? hiddenMsg : finalMsg;
+                for (let i = 0; i < count; i++) {
+                    const i3 = i * 3;
+                    const t = targets[i % targets.length];
+                    
+                    // Main Text
+                    mainPos[i3] += (t.x - mainPos[i3]) * 0.1;
+                    mainPos[i3+1] += (t.y - mainPos[i3+1]) * 0.1;
+                    mainPos[i3+2] += (0 - mainPos[i3+2]) * 0.1;
+
+                    // Mirror Reflection (Flipped Y and Shifted Down)
+                    mirrPos[i3] = mainPos[i3];
+                    mirrPos[i3+1] += ((-t.y - 12) - mirrPos[i3+1]) * 0.1; // -12 is the gap to the floor
+                    mirrPos[i3+2] = mainPos[i3+2];
+                    
+                    if(mode === 'final') {
+                        mainCol[i3] = 0.9; mainCol[i3+1] *= 0.95; mainCol[i3+2] *= 0.95;
+                        mirrCol[i3] = 0.5; mirrCol[i3+1] *= 0.8; mirrCol[i3+2] *= 0.8; // Darker reflection
+                    }
+                }
+                mainSystem.geometry.attributes.color.needsUpdate = true;
+                mirrorSystem.geometry.attributes.color.needsUpdate = true;
+            }
+            mainSystem.geometry.attributes.position.needsUpdate = true;
+            mirrorSystem.geometry.attributes.position.needsUpdate = true;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        document.getElementById('start-screen').addEventListener('click', () => tl.play());
+    </script>
+</body>
+</html>
